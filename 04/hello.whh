@@ -1,0 +1,7 @@
+function sayHello(){
+    println("Hello World!");
+}
+
+sayHello();
+let a:int = 3 + 5 * 10;
+println(a);
