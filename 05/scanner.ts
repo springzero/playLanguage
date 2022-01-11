@@ -4,17 +4,23 @@
 export enum TokenKind { Keyword, Identifier, StringLiteral, IntegerLiteral, DecimalLiteral, NullLiteral, BooleanLiteral, Seperator, Operator, EOF };
 
 // 代表一个Token的数据结构
-export interface Token {
+export class Token {
     kind: TokenKind;
     text: string;
-    // code: Op|Seperator|Keyword|null;
-    // pos: Position;
+    code: Op | Seperator | Keyword | null;
+    pos: Position;
 
-    // constructor(kind:TokenKind, text: string) {
-    //     this.kind = kind;
-    //     this.text = text;
-    //     this.pos = new Position(0,0,0,0);
-    // }
+    constructor(kind: TokenKind, text: string, pos: Position, code: Op | Seperator | Keyword | null = null) {
+        this.kind = kind;
+        this.text = text;
+        this.pos = pos;
+        this.code = code;
+    }
+
+    toString(): string {
+        return "Token" + "@" + this.pos.toString() + "\t" + TokenKind[this.kind] + " \t'" + this.text + "'";
+    }
+
 }
 
 // 代码位置
@@ -46,7 +52,7 @@ export class CharStream {
     data: string;
     pos: number = 0;
     line: number = 1;
-    col: number = 0;
+    col: number = 1;
     constructor(data: string) {
         this.data = data;
     }
@@ -75,21 +81,76 @@ export class CharStream {
 export class Scanner {
     tokens: Array<Token> = new Array<Token>();   // 采用一个array， 能预存多个Token
     stream: CharStream;
-    private static KeyWords: Set<string> = new Set(
-        ["function", "class", "break", "delete", "return",
-            "case", "do", "if", "switch", "var",
-            "catch", "else", "in", "this", "void",
-            "continue", "false", "instanceof", "throw", "while",
-            "debugger", "finally", "new", "true", "with",
-            "default", "for", "null", "try", "typeof",
-            //下面这些用于严格模式
-            "implements", "let", "private", "public", "yield",
-            "interface", "package", "protected", "static",
-            // 类型
-            "number", "string", "boolean", "any", "symbol",
-            // 值
-            "undefined"
-        ]);
+    private lastPos: Position = new Position(0, 0, 0, 0);
+
+    // private static KeyWords: Set<string> = new Set(
+    //     [
+    //         "function", "class", "break", "delete", "return",
+    //         "case", "do", "if", "switch", "var",
+    //         "catch", "else", "in", "this", "void",
+    //         "continue", "false", "instanceof", "throw", "while",
+    //         "debugger", "finally", "new", "true", "with",
+    //         "default", "for", "null", "try", "typeof",
+    //         //下面这些用于严格模式
+    //         "implements", "let", "private", "public", "yield",
+    //         "interface", "package", "protected", "static",
+    //         // 类型
+    //         "number", "string", "boolean", "any", "symbol",
+    //         // 值
+    //         "undefined"
+    //     ]
+    // );
+
+    private KeywordMap: Map<string, Keyword> = new Map([
+        ["function", Keyword.Function],
+        ["class", Keyword.Class],
+        ["break", Keyword.Break],
+        ["delete", Keyword.Delete],
+        ["return", Keyword.Return],
+        ["case", Keyword.Case],
+        ["do", Keyword.Do],
+        ["if", Keyword.If],
+        ["switch", Keyword.Switch],
+        ["var", Keyword.Var],
+        ["catch", Keyword.Catch],
+        ["else", Keyword.Else],
+        ["in", Keyword.In],
+        ["this", Keyword.This],
+        ["void", Keyword.Void],
+        ["continue", Keyword.Continue],
+        ["false", Keyword.False],
+        ["instanceof", Keyword.Instanceof],
+        ["throw", Keyword.Throw],
+        ["while", Keyword.While],
+        ["debugger", Keyword.Debugger],
+        ["finally", Keyword.Finally],
+        ["new", Keyword.New],
+        ["true", Keyword.True],
+        ["with", Keyword.With],
+        ["default", Keyword.Default],
+        ["for", Keyword.For],
+        ["null", Keyword.Null],
+        ["try", Keyword.Try],
+        ["typeof", Keyword.Typeof],
+        //下面这些用于严格模式
+        ["implements", Keyword.Implements],
+        ["let", Keyword.Let],
+        ["private", Keyword.Private],
+        ["public", Keyword.Public],
+        ["yield", Keyword.Yield],
+        ["interface", Keyword.Interface],
+        ["package", Keyword.Package],
+        ["protected", Keyword.Protected],
+        ["static", Keyword.Static],
+        //类型  注释掉这部分 使类型能正常工作
+        // ["number", Keyword.Number],
+        // ["string", Keyword.String],
+        // ["boolean", Keyword.Boolean],
+        // ["any", Keyword.Any],
+        // ["symbol", Keyword.Symbol],
+        // //值
+        // ["undefined", Keyword.Undefined],
+    ])
 
     constructor(stream: CharStream) {
         this.stream = stream;
@@ -99,9 +160,9 @@ export class Scanner {
         let t: Token | undefined = this.tokens.shift();
         if (typeof t == 'undefined') {
             return this.getAToken()
-        } else {
-            return t;
         }
+        this.lastPos = t.pos;
+        return t;
     }
 
     peek(): Token {
@@ -123,16 +184,22 @@ export class Scanner {
     }
 
     // 获取接下来的Token的位置
-    // getNextPos():Position{
-    //     return this.peek().pos;
-    // }
+    getNextPos(): Position {
+        return this.peek().pos;
+    }
+
+    // 获取前一个Token的position？ 看来这个值是必需的
+    getLastPos(): Position {
+        return this.lastPos;
+    }
 
 
     //从字符串流中获取一个新Token。
     private getAToken(): Token {
         this.skipWhiteSpaces();
+        let pos = this.stream.getPosition();
         if (this.stream.eof()) {
-            return { kind: TokenKind.EOF, text: "" };
+            return new Token(TokenKind.EOF, "EOF", pos);
         }
         else {
             let ch: string = this.stream.peek();
@@ -142,10 +209,49 @@ export class Scanner {
             else if (ch == '"') {
                 return this.parseStringLiteral();
             }
-            else if (ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == '[' || ch == ']' ||
-                ch == ',' || ch == ';' || ch == ':' || ch == '?' || ch == '@') {
+            else if (ch == '(') {
                 this.stream.next();
-                return { kind: TokenKind.Seperator, text: ch };
+                return new Token(TokenKind.Seperator, ch, pos, Seperator.OpenParen);
+            }
+            else if (ch == ')') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Seperator.CloseParen);
+            }
+            else if (ch == '{') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Seperator.OpenBrace);
+            }
+            else if (ch == '}') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Seperator.CloseBrace);
+            }
+            else if (ch == '[') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Seperator.OpenBracket);
+            }
+            else if (ch == ']') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Seperator.CloseBracket);
+            }
+            else if (ch == ':') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Seperator.Colon);
+            }
+            else if (ch == ';') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Seperator.SemiColon);
+            }
+            else if (ch == ',') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Op.Comma);
+            }
+            else if (ch == '?') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Op.QuestionMark);
+            }
+            else if (ch == '@') {
+                this.stream.next();
+                return new Token(TokenKind.Seperator, ch, pos, Op.At);
             }
             //解析数字字面量，语法是：
             // DecimalLiteral: IntegerLiteral '.' [0-9]* 
@@ -187,11 +293,12 @@ export class Scanner {
                         literal += ch;
                         ch1 = this.stream.peek();
                     }
-                    return { kind: TokenKind.DecimalLiteral, text: literal };
+                    pos.end = this.stream.pos + 1;
+                    return new Token(TokenKind.DecimalLiteral, literal, pos);
                 }
                 else {
                     //返回一个整型直面量
-                    return { kind: TokenKind.IntegerLiteral, text: literal };
+                    return new Token(TokenKind.IntegerLiteral, literal, pos);
                 }
             }
             else if (ch == '.') {
@@ -205,7 +312,8 @@ export class Scanner {
                         literal += ch;
                         ch1 = this.stream.peek();
                     }
-                    return { kind: TokenKind.DecimalLiteral, text: literal };
+                    pos.end = this.stream.pos + 1; // 这里为什么要加1  因为上一条命令是peek？有可能
+                    return new Token(TokenKind.DecimalLiteral, literal, pos);
                 }
                 //...省略号
                 else if (ch1 == '.') {
@@ -213,7 +321,8 @@ export class Scanner {
                     //第三个.
                     ch1 = this.stream.peek();
                     if (ch1 == '.') {
-                        return { kind: TokenKind.Seperator, text: '...' }
+                        pos.end = this.stream.pos + 1;
+                        return new Token(TokenKind.Seperator, '...', pos, Op.Ellipsis);
                     }
                     else {
                         console.log('Unrecognized pattern : .., missed a . ?');
@@ -222,7 +331,7 @@ export class Scanner {
                 }
                 //.号分隔符
                 else {
-                    return { kind: TokenKind.Seperator, text: '.' };
+                    return new Token(TokenKind.Seperator, '.', pos, Op.Dot);
                 }
             }
             else if (ch == '/') {
@@ -238,10 +347,10 @@ export class Scanner {
                 }
                 else if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '/=' };
+                    return new Token(TokenKind.Operator, '/=', pos, Op.DivideAssign);
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '/' };
+                    return new Token(TokenKind.Operator, '/', pos, Op.Divide);
                 }
             }
             else if (ch == '+') {
@@ -249,13 +358,13 @@ export class Scanner {
                 let ch1 = this.stream.peek();
                 if (ch1 == '+') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '++' };
+                    return new Token(TokenKind.Operator, '++', pos, Op.Inc);
                 } else if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '+=' };
+                    return new Token(TokenKind.Operator, '+=', pos, Op.PlusAssign);
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '+' };
+                    return new Token(TokenKind.Operator, '+', pos, Op.Plus);
                 }
             }
             else if (ch == '-') {
@@ -263,13 +372,13 @@ export class Scanner {
                 let ch1 = this.stream.peek();
                 if (ch1 == '-') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '--' };
+                    return new Token(TokenKind.Operator, '--', pos, Op.Dec);
                 } else if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '-=' };
+                    return new Token(TokenKind.Operator, '-=', pos, Op.MinusAssign);
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '-' };
+                    return new Token(TokenKind.Operator, '-', pos, Op.Minus);
                 }
             }
             else if (ch == '*') {
@@ -277,10 +386,10 @@ export class Scanner {
                 let ch1 = this.stream.peek();
                 if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '*=' };
+                    return new Token(TokenKind.Operator, '*=', pos, Op.MultiplyAssign);
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '*' };
+                    return new Token(TokenKind.Operator, '*', pos, Op.Multiply);
                 }
             }
             else if (ch == '%') {
@@ -288,10 +397,10 @@ export class Scanner {
                 let ch1 = this.stream.peek();
                 if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '%=' };
+                    return new Token(TokenKind.Operator, '%=', pos, Op.ModulusAssign);
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '%' };
+                    return new Token(TokenKind.Operator, '%', pos, Op.Modulus);
                 }
             }
             else if (ch == '>') {
@@ -299,7 +408,7 @@ export class Scanner {
                 let ch1 = this.stream.peek();
                 if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '>=' };
+                    return new Token(TokenKind.Operator, '>=', pos, Op.GE);
                 }
                 else if (ch1 == '>') {
                     this.stream.next();
@@ -309,22 +418,22 @@ export class Scanner {
                         ch1 = this.stream.peek();
                         if (ch1 == '=') {
                             this.stream.next();
-                            return { kind: TokenKind.Operator, text: '>>>=' };
+                            return new Token(TokenKind.Operator, '>>>=', pos, Op.RightShiftLogicalAssign);
                         }
                         else {
-                            return { kind: TokenKind.Operator, text: '>>>' };
+                            return new Token(TokenKind.Operator, '>>>', pos, Op.RightShiftLogical);
                         }
                     }
                     else if (ch1 == '=') {
                         this.stream.next();
-                        return { kind: TokenKind.Operator, text: '>>=' };
+                        return new Token(TokenKind.Operator, '>>=', pos, Op.LeftShiftArithmeticAssign);
                     }
                     else {
-                        return { kind: TokenKind.Operator, text: '>>' };
+                        return new Token(TokenKind.Operator, '>>', pos, Op.RightShiftArithmetic);
                     }
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '>' };
+                    return new Token(TokenKind.Operator, '>', pos, Op.G);
                 }
             }
             else if (ch == '<') {
@@ -332,21 +441,21 @@ export class Scanner {
                 let ch1 = this.stream.peek();
                 if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '<=' };
+                    return new Token(TokenKind.Operator, '<=', pos, Op.LE);
                 }
                 else if (ch1 == '<') {
                     this.stream.next();
                     ch1 = this.stream.peek();
                     if (ch1 == '=') {
                         this.stream.next();
-                        return { kind: TokenKind.Operator, text: '<<=' };
+                        return new Token(TokenKind.Operator, '<<=', pos, Op.LeftShiftArithmeticAssign);
                     }
                     else {
-                        return { kind: TokenKind.Operator, text: '<<' };
+                        return new Token(TokenKind.Operator, '<<', pos, Op.LeftShiftArithmetic);
                     }
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '<' };
+                    return new Token(TokenKind.Operator, '<', pos, Op.L);
                 }
             }
             else if (ch == '=') {
@@ -357,19 +466,19 @@ export class Scanner {
                     let ch1 = this.stream.peek();
                     if (ch1 = '=') {
                         this.stream.next();
-                        return { kind: TokenKind.Operator, text: '===' };
+                        return new Token(TokenKind.Operator, '===', pos, Op.IdentityEquals);
                     }
                     else {
-                        return { kind: TokenKind.Operator, text: '==' };
+                        return new Token(TokenKind.Operator, '==', pos, Op.EQ);
                     }
                 }
                 //箭头=>
                 else if (ch1 == '>') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '=>' };
+                    return new Token(TokenKind.Operator, '=>', pos, Op.ARROW);
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '=' };
+                    return new Token(TokenKind.Operator, '=', pos, Op.Assign);
                 }
             }
             else if (ch == '!') {
@@ -380,14 +489,14 @@ export class Scanner {
                     let ch1 = this.stream.peek();
                     if (ch1 = '=') {
                         this.stream.next();
-                        return { kind: TokenKind.Operator, text: '!==' };
+                        return new Token(TokenKind.Operator, '!==', pos, Op.IdentityNotEquals);
                     }
                     else {
-                        return { kind: TokenKind.Operator, text: '!=' };
+                        return new Token(TokenKind.Operator, '!=', pos, Op.NE);
                     }
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '!' };
+                    return new Token(TokenKind.Operator, '!', pos, Op.Not);
                 }
             }
             else if (ch == '|') {
@@ -395,14 +504,14 @@ export class Scanner {
                 let ch1 = this.stream.peek();
                 if (ch1 == '|') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '||' };
+                    return new Token(TokenKind.Operator, '||', pos, Op.Or);
                 }
                 else if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '|=' };
+                    return new Token(TokenKind.Operator, '|=', pos, Op.BitOrAssign);
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '|' };
+                    return new Token(TokenKind.Operator, '|', pos, Op.BitOr);
                 }
             }
             else if (ch == '&') {
@@ -410,14 +519,14 @@ export class Scanner {
                 let ch1 = this.stream.peek();
                 if (ch1 == '&') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '&&' };
+                    return new Token(TokenKind.Operator, '&&', pos, Op.And);
                 }
                 else if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '&=' };
+                    return new Token(TokenKind.Operator, '&=', pos, Op.BitAndAssign);
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '&' };
+                    return new Token(TokenKind.Operator, '&', pos, Op.BitAnd);
                 }
             }
             else if (ch == '^') {
@@ -425,15 +534,15 @@ export class Scanner {
                 let ch1 = this.stream.peek();
                 if (ch1 == '=') {
                     this.stream.next();
-                    return { kind: TokenKind.Operator, text: '^=' };
+                    return new Token(TokenKind.Operator, '^=', pos, Op.BitXorAssign);
                 }
                 else {
-                    return { kind: TokenKind.Operator, text: '^' };
+                    return new Token(TokenKind.Operator, '^', pos, Op.BitXOr);
                 }
             }
             else if (ch == '~') {
                 this.stream.next();
-                return { kind: TokenKind.Operator, text: ch };
+                return new Token(TokenKind.Operator, '~', pos, Op.BitNot);
             }
             else {
                 //暂时去掉不能识别的字符
@@ -493,7 +602,8 @@ export class Scanner {
      * 目前只支持双引号，并且不支持转义。
      */
     private parseStringLiteral(): Token {
-        let token: Token = { kind: TokenKind.StringLiteral, text: "" };
+        let pos = this.stream.getPosition();
+        let token = new Token(TokenKind.StringLiteral, "", pos);
 
         //第一个字符不用判断，因为在调用者那里已经判断过了
         this.stream.next();
@@ -517,7 +627,8 @@ export class Scanner {
      * 解析标识符。从标识符中还要挑出关键字。
      */
     private parseIdentifer(): Token {
-        let token: Token = { kind: TokenKind.Identifier, text: "" };
+        let pos = this.stream.getPosition();
+        let token = new Token(TokenKind.Identifier, "", pos);
 
         //第一个字符不用判断，因为在调用者那里已经判断过了
         token.text += this.stream.next();
@@ -529,17 +640,11 @@ export class Scanner {
         }
 
         //识别出关键字（从字典里查，速度会比较快）
-        if (Scanner.KeyWords.has(token.text)) {
+        if (this.KeywordMap.has(token.text)) {
             token.kind = TokenKind.Keyword;
+            token.code = this.KeywordMap.get(token.text) as Keyword;
         }
-        //null
-        else if (token.text == 'null') {
-            token.kind = TokenKind.NullLiteral;
-        }
-        //布尔型字面量
-        else if (token.text == 'true' || token.text == 'false') {
-            token.kind = TokenKind.BooleanLiteral;
-        }
+
 
         return token;
     }
@@ -562,4 +667,125 @@ export class Scanner {
     private isWhiteSpace(ch: string): boolean {
         return (ch == ' ' || ch == '\n' || ch == '\t');
     }
+}
+
+////////////////////////
+// 将Token细化分类
+
+// 分隔符
+export enum Seperator {
+    OpenBracket = 0,    // [
+    CloseBracket,       // ]
+    OpenParen,          // (
+    CloseParen,         // )
+    OpenBrace,          // {
+    CloseBrace,         // }
+    Colon,              // :
+    SemiColon,          // ;
+}
+
+// 运算符
+export enum Op {
+    QuestionMark = 100,             //?   让几个类型的code取值不重叠
+    Ellipsis,                       //...
+    Dot,                            //.
+    Comma,                          //,
+    At,                             //@
+
+    RightShiftArithmetic,           //>>
+    LeftShiftArithmetic,            //<<
+    RightShiftLogical,              //>>>
+    IdentityEquals,                 //===
+    IdentityNotEquals,              //!==
+
+    BitNot,                         //~
+    BitAnd,                         //&
+    BitXOr,                         //^
+    BitOr,                          //|
+
+    Not,                            //!   
+    And,                            //&&
+    Or,                             //||
+
+    Assign,                         //=
+    MultiplyAssign,                 //*=
+    DivideAssign,                   ///=
+    ModulusAssign,                  //%=
+    PlusAssign,                     //+=
+    MinusAssign,                    //-=
+    LeftShiftArithmeticAssign,      //<<=
+    RightShiftArithmeticAssign,     //>>=
+    RightShiftLogicalAssign,        //>>>=
+    BitAndAssign,                   //&=
+    BitXorAssign,                   //^=
+    BitOrAssign,                    //|=
+
+    ARROW,                          //=>
+
+    Inc,                            //++
+    Dec,                            //--
+
+    Plus,                           //+
+    Minus,                          //-
+    Multiply,                       //*
+    Divide,                         ///
+    Modulus,                        //%
+
+    EQ,                             //==
+    NE,                             //!=
+    G,                              //>
+    GE,                             //>=
+    L,                              //<
+    LE,                             //<=
+}
+
+// 关键字
+export enum Keyword {
+    Function = 200,
+    Class,
+    Break,
+    Delete,
+    Return,
+    Case,
+    Do,
+    If,
+    Switch,
+    Var,
+    Catch,
+    Else,
+    In,
+    This,
+    Void,
+    Continue,
+    False,
+    Instanceof,
+    Throw,
+    While,
+    Debugger,
+    Finally,
+    New,
+    True,
+    With,
+    Default,
+    For,
+    Null,
+    Try,
+    Typeof,
+    // 严格模式
+    Implements,
+    Let,
+    Private,
+    Public,
+    Yield,
+    Interface,
+    Package,
+    Protected,
+    Static,
+
+    // Any,
+    // String,
+    // Number,
+    // Boolean,
+    // Symbol,
+    // Undefined,
 }

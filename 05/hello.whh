@@ -1,7 +1,11 @@
 function sayHello(){
     println("Hello World!");
 }
+function hi(name:string){
+    println("Hi " + name);
+}
 
 sayHello();
-let a:int = 3 + 5 * 10;
+hi("vac");
+let a:number = 3 + 5 * 10;
 println(a);

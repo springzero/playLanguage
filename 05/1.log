@@ -1,0 +1,151 @@
+源代码:
+function sayHello(){
+    println("Hello World!");
+}
+function hi(name:string){
+    println("Hi " + name);
+}
+
+sayHello();
+hi("vac");
+let a:number = 3 + 5 * 10;
+println(a);
+
+词法分析结果:
+Token@(ln:1, col:1, pos:1)	Keyword 	'function'
+Token@(ln:1, col:10, pos:10)	Identifier 	'sayHello'
+Token@(ln:1, col:18, pos:18)	Seperator 	'('
+Token@(ln:1, col:19, pos:19)	Seperator 	')'
+Token@(ln:1, col:20, pos:20)	Seperator 	'{'
+Token@(ln:2, col:4, pos:26)	Identifier 	'println'
+Token@(ln:2, col:11, pos:33)	Seperator 	'('
+Token@(ln:2, col:12, pos:34)	StringLiteral 	'Hello World!'
+Token@(ln:2, col:26, pos:48)	Seperator 	')'
+Token@(ln:2, col:27, pos:49)	Seperator 	';'
+Token@(ln:3, col:0, pos:51)	Seperator 	'}'
+Token@(ln:4, col:0, pos:53)	Keyword 	'function'
+Token@(ln:4, col:9, pos:62)	Identifier 	'hi'
+Token@(ln:4, col:11, pos:64)	Seperator 	'('
+Token@(ln:4, col:12, pos:65)	Identifier 	'name'
+Token@(ln:4, col:16, pos:69)	Seperator 	':'
+Token@(ln:4, col:17, pos:70)	Identifier 	'string'
+Token@(ln:4, col:23, pos:76)	Seperator 	')'
+Token@(ln:4, col:24, pos:77)	Seperator 	'{'
+Token@(ln:5, col:4, pos:83)	Identifier 	'println'
+Token@(ln:5, col:11, pos:90)	Seperator 	'('
+Token@(ln:5, col:12, pos:91)	StringLiteral 	'Hi '
+Token@(ln:5, col:18, pos:97)	Operator 	'+'
+Token@(ln:5, col:20, pos:99)	Identifier 	'name'
+Token@(ln:5, col:24, pos:103)	Seperator 	')'
+Token@(ln:5, col:25, pos:104)	Seperator 	';'
+Token@(ln:6, col:0, pos:106)	Seperator 	'}'
+Token@(ln:8, col:0, pos:109)	Identifier 	'sayHello'
+Token@(ln:8, col:8, pos:117)	Seperator 	'('
+Token@(ln:8, col:9, pos:118)	Seperator 	')'
+Token@(ln:8, col:10, pos:119)	Seperator 	';'
+Token@(ln:9, col:0, pos:121)	Identifier 	'hi'
+Token@(ln:9, col:2, pos:123)	Seperator 	'('
+Token@(ln:9, col:3, pos:124)	StringLiteral 	'vac'
+Token@(ln:9, col:8, pos:129)	Seperator 	')'
+Token@(ln:9, col:9, pos:130)	Seperator 	';'
+Token@(ln:10, col:0, pos:132)	Keyword 	'let'
+Token@(ln:10, col:4, pos:136)	Identifier 	'a'
+Token@(ln:10, col:5, pos:137)	Seperator 	':'
+Token@(ln:10, col:6, pos:138)	Identifier 	'number'
+Token@(ln:10, col:13, pos:145)	Operator 	'='
+Token@(ln:10, col:15, pos:147)	IntegerLiteral 	'3'
+Token@(ln:10, col:17, pos:149)	Operator 	'+'
+Token@(ln:10, col:19, pos:151)	IntegerLiteral 	'5'
+Token@(ln:10, col:21, pos:153)	Operator 	'*'
+Token@(ln:10, col:23, pos:155)	IntegerLiteral 	'10'
+Token@(ln:10, col:25, pos:157)	Seperator 	';'
+Token@(ln:11, col:0, pos:159)	Identifier 	'println'
+Token@(ln:11, col:7, pos:166)	Seperator 	'('
+Token@(ln:11, col:8, pos:167)	Identifier 	'a'
+Token@(ln:11, col:9, pos:168)	Seperator 	')'
+Token@(ln:11, col:10, pos:169)	Seperator 	';'
+
+语法分析后的AST:
+Prog
+   FunctionDecl sayHello
+       Return type: any
+           ParamList:none
+           ExpressionStatement
+               FunctionCall println, built-in
+                   Hello World!
+   FunctionDecl hi
+       Return type: any
+           ParamList:
+               VariableDecl name(string)
+               no initialization.
+           ExpressionStatement
+               FunctionCall println, built-in
+                   Binary:Plus
+                       Hi 
+                       Variable: name, not resolved
+   ExpressionStatement
+       FunctionCall sayHello, not resolved
+   ExpressionStatement
+       FunctionCall hi, not resolved
+           vac
+   VariableStatement 
+      VariableDecl a(number)
+         Binary:Plus
+             3
+             Binary:Multiply
+                 5
+                 10
+   ExpressionStatement
+       FunctionCall println, built-in
+           Variable: a, not resolved
+
+符号表：
+Scope of block
+  sayHello{Function, local var count:0}
+  hi{Function, local var count:1}
+  a{Variable}
+  Scope of function: sayHello
+    Scope of block
+  Scope of function: hi
+    name{Variable}
+    Scope of block
+
+语义分析后的AST，注意变量和函数已被消解：
+Prog
+   FunctionDecl sayHello
+       Return type: any
+           ParamList:none
+           ExpressionStatement
+               FunctionCall println, built-in
+                   Hello World!
+   FunctionDecl hi
+       Return type: any
+           ParamList:
+               VariableDecl name(string)
+               no initialization.
+           ExpressionStatement
+               FunctionCall println, built-in
+                   Binary:Plus
+                       Hi 
+                       Variable: name, resolved
+   ExpressionStatement
+       FunctionCall sayHello, resolved
+   ExpressionStatement
+       FunctionCall hi, resolved
+           vac
+   VariableStatement 
+      VariableDecl a(number)
+         Binary:Plus
+             3
+             Binary:Multiply
+                 5
+                 10
+   ExpressionStatement
+       FunctionCall println, built-in
+           Variable: a, resolved
+
+运行当前的程序:
+Hello World!
+Hi vac
+53
+程序返回值: 0
