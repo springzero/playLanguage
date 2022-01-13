@@ -171,14 +171,14 @@ function compileAndRun(program) {
     while (tokenizer.peek().kind != scanner_1.TokenKind.EOF) {
         console.log(tokenizer.next());
     }
-    tokenizer = new scanner_1.Scanner(new scanner_1.CharStream(program));
     console.log("\n语法分析后的AST:");
+    tokenizer = new scanner_1.Scanner(new scanner_1.CharStream(program));
     var prog = new parser_1.Parser(tokenizer).parseProg();
     prog.dump("");
     console.log("\n语义分析后的AST，注意变量和函数已被消解:");
     var symTable = new semantic_1.SymTable();
-    new semantic_1.Enter(symTable).visit(prog);
-    new semantic_1.RefResolver(symTable).visit(prog);
+    new semantic_1.Enter(symTable).visit(prog); // 建立符号表
+    new semantic_1.RefResolver(symTable).visit(prog); // 消解函数引用
     prog.dump("");
     console.log("\n运行当前的程序:");
     var retVal = new Intepretor().visit(prog);

@@ -173,7 +173,7 @@ var Parser = /** @class */ (function () {
             console.log("Expecting a function name in functionDecl, while we got a " + t.text);
             return null;
         }
-        return;
+        return null;
     };
     // functionBody : '{' statementList? '}' ;
     // statementList = (variableDecl | functionDecl | expressionStatement)+ ;
@@ -196,7 +196,6 @@ var Parser = /** @class */ (function () {
             console.log("Expectiong { in FunctionBody, while we got a " + t.text);
             return null;
         }
-        return;
     };
     // expressionStatement: expression ';' ;
     // expression: primary (binOP primary)* ;
@@ -260,7 +259,7 @@ var Parser = /** @class */ (function () {
         else {
             console.log("Can not recognize a expression starting with: " + this.scanner.peek().text);
         }
-        return;
+        return null;
     };
     // primary: StringLiteral | DecimalLiteral | IntegerLiteral | functionCall | '(' expression ')' ;
     // expression: primary (binOP primary)* ;
@@ -312,7 +311,6 @@ var Parser = /** @class */ (function () {
             console.log("Can not recognize a primary expression starting with: " + t.text);
             return null;
         }
-        return;
     };
     // functionCall : Identifier '(' parameterList? ')' ;
     // parameterList : expression (',' expression)* ;

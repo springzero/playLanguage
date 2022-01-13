@@ -4,4 +4,5 @@ function sayHello(){
 
 sayHello();
 let a:int = 3 + 5 * 10;
+a = a + 10;
 println(a);

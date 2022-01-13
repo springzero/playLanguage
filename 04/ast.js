@@ -12,6 +12,17 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
 exports.__esModule = true;
 exports.AstVisitor = exports.BooleanLiteral = exports.NullLiteral = exports.DecimalLiteral = exports.IntegerLiteral = exports.StringLiteral = exports.Variable = exports.FunctionCall = exports.ExpressionStatement = exports.Binary = exports.VariableDecl = exports.Prog = exports.Block = exports.FunctionDecl = exports.Decl = exports.Expression = exports.Statement = exports.AstNode = void 0;
 var AstNode = /** @class */ (function () {
@@ -329,10 +340,20 @@ var AstVisitor = /** @class */ (function () {
         return node.accept(this);
     };
     AstVisitor.prototype.visitProg = function (prog) {
+        var e_1, _a;
         var retVal;
-        for (var _i = 0, _a = prog.stmts; _i < _a.length; _i++) {
-            var x = _a[_i];
-            retVal = this.visit(x);
+        try {
+            for (var _b = __values(prog.stmts), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var x = _c.value;
+                retVal = this.visit(x);
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b["return"])) _a.call(_b);
+            }
+            finally { if (e_1) throw e_1.error; }
         }
         return retVal;
     };
@@ -345,10 +366,20 @@ var AstVisitor = /** @class */ (function () {
         return this.visitBlock(functionDecl.body);
     };
     AstVisitor.prototype.visitBlock = function (Block) {
+        var e_2, _a;
         var retVal;
-        for (var _i = 0, _a = Block.stmts; _i < _a.length; _i++) {
-            var x = _a[_i];
-            retVal = this.visit(x);
+        try {
+            for (var _b = __values(Block.stmts), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var x = _c.value;
+                retVal = this.visit(x);
+            }
+        }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b["return"])) _a.call(_b);
+            }
+            finally { if (e_2) throw e_2.error; }
         }
         return retVal;
     };

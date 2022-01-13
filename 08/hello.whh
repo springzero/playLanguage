@@ -1,0 +1,5 @@
+function foo(x:number):number{
+    return x + 10;
+}
+
+println(foo(18));

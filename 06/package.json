@@ -1,10 +1,11 @@
 {
-  "name": "05",
+  "name": "06",
   "version": "1.0.0",
   "description": "",
   "main": "play.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "hello": "tsc play.ts --downlevelIteration && echo 'hello' && node play.js hello.whh>1.log"
   },
   "author": "",
   "license": "ISC",

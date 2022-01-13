@@ -1,0 +1,116 @@
+源代码:
+function sayHello(){
+    println("Hello World!");
+}
+
+sayHello();
+let a:int = 3 + 5 * 10;
+a = a + 10;
+println(a);
+
+词法分析结果:
+{ kind: 0, text: 'function' }
+{ kind: 1, text: 'sayHello' }
+{ kind: 7, text: '(' }
+{ kind: 7, text: ')' }
+{ kind: 7, text: '{' }
+{ kind: 1, text: 'println' }
+{ kind: 7, text: '(' }
+{ kind: 2, text: 'Hello World!' }
+{ kind: 7, text: ')' }
+{ kind: 7, text: ';' }
+{ kind: 7, text: '}' }
+{ kind: 1, text: 'sayHello' }
+{ kind: 7, text: '(' }
+{ kind: 7, text: ')' }
+{ kind: 7, text: ';' }
+{ kind: 0, text: 'let' }
+{ kind: 1, text: 'a' }
+{ kind: 7, text: ':' }
+{ kind: 1, text: 'int' }
+{ kind: 8, text: '=' }
+{ kind: 3, text: '3' }
+{ kind: 8, text: '+' }
+{ kind: 3, text: '5' }
+{ kind: 8, text: '*' }
+{ kind: 3, text: '10' }
+{ kind: 7, text: ';' }
+{ kind: 1, text: 'a' }
+{ kind: 8, text: '=' }
+{ kind: 1, text: 'a' }
+{ kind: 8, text: '+' }
+{ kind: 3, text: '10' }
+{ kind: 7, text: ';' }
+{ kind: 1, text: 'println' }
+{ kind: 7, text: '(' }
+{ kind: 1, text: 'a' }
+{ kind: 7, text: ')' }
+{ kind: 7, text: ';' }
+
+语法分析后的AST:
+parsePrimary: println
+parsePrimary: Hello World!
+parsePrimary: sayHello
+parsePrimary: 3
+parsePrimary: 5
+parsePrimary: 10
+parsePrimary: a
+parsePrimary: a
+parsePrimary: 10
+parsePrimary: println
+parsePrimary: a
+Prog
+   FunctionDecl sayHello
+       Block
+          ExpressionStatement
+              FunctionCall println, not resolved
+                  Hello World!
+   ExpressionStatement
+       FunctionCall sayHello, not resolved
+   VariableDecl a, type: int
+       Binary:+
+           3
+           Binary:*
+               5
+               10
+   ExpressionStatement
+       Binary:=
+           Variable: a, not resolved
+           Binary:+
+               Variable: a, not resolved
+               10
+   ExpressionStatement
+       FunctionCall println, not resolved
+           Variable: a, not resolved
+
+语义分析后的AST，注意变量和函数已被消解:
+Prog
+   FunctionDecl sayHello
+       Block
+          ExpressionStatement
+              FunctionCall println, not resolved
+                  Hello World!
+   ExpressionStatement
+       FunctionCall sayHello, resolved
+   VariableDecl a, type: int
+       Binary:+
+           3
+           Binary:*
+               5
+               10
+   ExpressionStatement
+       Binary:=
+           Variable: a, resolved
+           Binary:+
+               Variable: a, resolved
+               10
+   ExpressionStatement
+       FunctionCall println, not resolved
+           Variable: a, not resolved
+
+运行当前的程序:
+Hello World!
+value of a : 53
+value of a : 53
+63
+程序返回值: 0
