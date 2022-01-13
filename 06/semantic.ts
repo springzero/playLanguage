@@ -21,7 +21,7 @@ export class SemanticAnalyer {
         new RefResolver(),
         // new TypeChecker(),
         // new TypeConverter(),
-        // new LeftValueAttributor()
+        new LeftValueAttributor()
     ];
 
     errors: CompilerError[] = [];    // 语义错误
@@ -287,7 +287,11 @@ class RefResolver extends SemanticAstVisitor {
      */
     visitVariable(variable: Variable): any {
         let currentScope = this.scope as Scope;
-        variable.sym = this.findVariableCascade(currentScope, variable);
+        let sym = this.findVariableCascade(currentScope, variable);
+        variable.sym = sym;
+        if (sym != null) {
+            variable.theType = sym.theType;
+        }
     }
 
     /**
@@ -344,11 +348,11 @@ class LeftValueAttributor extends SemanticAstVisitor {
      * @param binary 
      */
     visitBinary(binary: Binary): any {
-        if (Operators.isAssignOp(binary.op) || binary.op == Op.Dot) {
+        if (Operators.isAssignOp(binary.op)) {
             let lastParentOperator = this.parentOperator;
             this.parentOperator = binary.op;
 
-            //检查左子节点
+            //检查 = 的左子节点
             this.visit(binary.exp1);
             if (!binary.exp1.isLeftValue) {
                 this.addError("Left child of operator " + Op[binary.op] + " need a left value", binary.exp1);
@@ -412,6 +416,7 @@ class LeftValueAttributor extends SemanticAstVisitor {
 }
 
 class TypeChecker extends SemanticAstVisitor {
+
     visitVariableDecl(variableDecl: VariableDecl): any {
         super.visitVariableDecl(variableDecl);
 

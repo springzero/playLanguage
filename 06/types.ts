@@ -11,6 +11,7 @@ export abstract class Type {
 
     /**
      * 当前类型是否小于等于type2
+     * less than
      * @param type2 
      */
     abstract LE(type2: Type): boolean;
@@ -28,6 +29,7 @@ export abstract class Type {
 
     /**
     * type1与type2的上界
+    * 返回 值大的Type
     * @param type1 
     * @param type2 
     */
@@ -47,6 +49,8 @@ export abstract class Type {
             }
         }
     }
+
+    // 将Type类型强转为 判定类型 , 再根据是否存在判定类型的某成员变量，来确定类型是否本身就是判定类型
 
     static isSimpleType(t: Type) {
         return typeof (t as SimpleType).upperTypes == 'object';
@@ -72,6 +76,7 @@ export class SimpleType extends Type {
         this.upperTypes = upperTypes;
     }
 
+    // 在自身及上层类型中一直查找SysTypes.Void
     hasVoid(): boolean {
         if (this === SysTypes.Void) {
             return true;
@@ -112,6 +117,7 @@ export class SimpleType extends Type {
         }
         else if (Type.isSimpleType(type2)) {
             let t = type2 as SimpleType;
+            // 如果type2 是自身的父类型，返回true
             if (this.upperTypes.indexOf(t) != -1) {
                 return true;
             }

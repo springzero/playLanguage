@@ -227,9 +227,6 @@ var Intepretor = /** @class */ (function (_super) {
             return v;
         }
     };
-    Intepretor.prototype.isLeftValue = function (v) {
-        return v.sym != null;
-    };
     /**
      * 获取变量的值
      * 这里给出的是左值。左值即可以写，也可以读
@@ -253,9 +250,6 @@ var Intepretor = /** @class */ (function (_super) {
     Intepretor.prototype.setVariableValue = function (sym, value) {
         return this.currentFrame.values.set(sym, value);
     };
-    // private isLeftValue(v: any): boolean {
-    //     return typeof (v as LeftValue).variable == 'object';
-    // }
     /**
      * 二元运算
      * @param bi

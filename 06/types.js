@@ -34,6 +34,7 @@ var Type = /** @class */ (function () {
     }
     /**
     * type1与type2的上界
+    * 返回 值大的Type
     * @param type1
     * @param type2
     */
@@ -53,6 +54,7 @@ var Type = /** @class */ (function () {
             }
         }
     };
+    // 将Type类型强转为 判定类型 , 再根据是否存在判定类型的某成员变量，来确定类型是否本身就是判定类型
     Type.isSimpleType = function (t) {
         return typeof t.upperTypes == 'object';
     };
@@ -76,6 +78,7 @@ var SimpleType = /** @class */ (function (_super) {
         _this.upperTypes = upperTypes;
         return _this;
     }
+    // 在自身及上层类型中一直查找SysTypes.Void
     SimpleType.prototype.hasVoid = function () {
         var e_1, _a;
         if (this === SysTypes.Void) {
@@ -137,6 +140,7 @@ var SimpleType = /** @class */ (function (_super) {
         }
         else if (Type.isSimpleType(type2)) {
             var t = type2;
+            // 如果type2 是自身的父类型，返回true
             if (this.upperTypes.indexOf(t) != -1) {
                 return true;
             }

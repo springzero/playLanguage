@@ -44,6 +44,9 @@ var SemanticAnalyer = /** @class */ (function () {
         this.passes = [
             new Enter(),
             new RefResolver(),
+            // new TypeChecker(),
+            // new TypeConverter(),
+            new LeftValueAttributor()
         ];
         this.errors = []; // 语义错误
         this.warnings = []; // 语义报警信息
@@ -303,7 +306,11 @@ var RefResolver = /** @class */ (function (_super) {
      */
     RefResolver.prototype.visitVariable = function (variable) {
         var currentScope = this.scope;
-        variable.sym = this.findVariableCascade(currentScope, variable);
+        var sym = this.findVariableCascade(currentScope, variable);
+        variable.sym = sym;
+        if (sym != null) {
+            variable.theType = sym.theType;
+        }
     };
     /**
      * 逐级查找变量的符号信息
@@ -360,10 +367,10 @@ var LeftValueAttributor = /** @class */ (function (_super) {
      * @param binary
      */
     LeftValueAttributor.prototype.visitBinary = function (binary) {
-        if (scanner_1.Operators.isAssignOp(binary.op) || binary.op == scanner_1.Op.Dot) {
+        if (scanner_1.Operators.isAssignOp(binary.op)) {
             var lastParentOperator = this.parentOperator;
             this.parentOperator = binary.op;
-            //检查左子节点
+            //检查 = 的左子节点
             this.visit(binary.exp1);
             if (!binary.exp1.isLeftValue) {
                 this.addError("Left child of operator " + scanner_1.Op[binary.op] + " need a left value", binary.exp1);

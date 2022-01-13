@@ -225,10 +225,6 @@ class Intepretor extends AstVisitor {
         }
     }
 
-    private isLeftValue(v: Variable): boolean {
-        return v.sym != null;
-    }
-
     /**
      * 获取变量的值
      * 这里给出的是左值。左值即可以写，也可以读
@@ -256,9 +252,7 @@ class Intepretor extends AstVisitor {
 
     }
 
-    // private isLeftValue(v: any): boolean {
-    //     return typeof (v as LeftValue).variable == 'object';
-    // }
+
 
     /**
      * 二元运算

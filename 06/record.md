@@ -10,5 +10,7 @@
 // 所以是需要 LeftValueAttributor
 
 // 0113
-// 
+// 确实不需要TypeChecker、TypeConverter，只是因为变量的 theType 为null 导致 LeftValueAttributor 运算不下去
+// 那么变量的theType 怎么会为null
+// 最后：根本原因是变量消解的时候，没有给变量的theType赋值，只是赋值了下sym；而给变量的theType赋值，作者放到了TypeChecker里。 （修改变量消解这块代码，或者修改左值计算那块的代码）或者加上TypeChecker 也行。 结案了
 
