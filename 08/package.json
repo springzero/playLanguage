@@ -1,0 +1,15 @@
+{
+  "name": "08",
+  "version": "1.0.0",
+  "description": "",
+  "main": "play.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "hello": "tsc play.ts --downlevelIteration && echo 'hello' && node play.js hello.whh>1.log"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "15.6.1"
+  }
+}

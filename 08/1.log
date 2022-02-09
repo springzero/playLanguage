@@ -1,0 +1,92 @@
+源代码:
+function foo(x:number):number{
+    return x + 10;
+}
+
+println(foo(18));
+
+
+词法分析结果:
+Token@(ln:1, col:1, pos:1)	Keyword 	'function'
+Token@(ln:1, col:10, pos:10)	Identifier 	'foo'
+Token@(ln:1, col:13, pos:13)	Seperator 	'('
+Token@(ln:1, col:14, pos:14)	Identifier 	'x'
+Token@(ln:1, col:15, pos:15)	Seperator 	':'
+Token@(ln:1, col:16, pos:16)	Identifier 	'number'
+Token@(ln:1, col:22, pos:22)	Seperator 	')'
+Token@(ln:1, col:23, pos:23)	Seperator 	':'
+Token@(ln:1, col:24, pos:24)	Identifier 	'number'
+Token@(ln:1, col:30, pos:30)	Seperator 	'{'
+Token@(ln:2, col:4, pos:36)	Keyword 	'return'
+Token@(ln:2, col:11, pos:43)	Identifier 	'x'
+Token@(ln:2, col:13, pos:45)	Operator 	'+'
+Token@(ln:2, col:15, pos:47)	IntegerLiteral 	'10'
+Token@(ln:2, col:17, pos:49)	Seperator 	';'
+Token@(ln:3, col:0, pos:51)	Seperator 	'}'
+Token@(ln:5, col:0, pos:54)	Identifier 	'println'
+Token@(ln:5, col:7, pos:61)	Seperator 	'('
+Token@(ln:5, col:8, pos:62)	Identifier 	'foo'
+Token@(ln:5, col:11, pos:65)	Seperator 	'('
+Token@(ln:5, col:12, pos:66)	IntegerLiteral 	'18'
+Token@(ln:5, col:14, pos:68)	Seperator 	')'
+Token@(ln:5, col:15, pos:69)	Seperator 	')'
+Token@(ln:5, col:16, pos:70)	Seperator 	';'
+
+语法分析后的AST:
+Prog
+   FunctionDecl foo
+       Return type: number
+           ParamList:
+               VariableDecl x(number)
+               no initialization.
+           ReturnStatement
+               Binary:Plus
+                   Variable: x, not resolved
+                   10(integer)
+   ExpressionStatement
+       FunctionCall println, built-in
+           FunctionCall foo, not resolved
+               18(integer)
+
+符号表：
+Scope of block
+    father: undefined
+    foo{Function, local var count:1}
+  Scope of function: foo
+      father: block_debug_1_5
+      x{Variable}
+    Scope of block
+        father: function_debug_1_3
+        {empty}
+
+语义分析后的AST，注意变量和函数已被消解：
+Prog
+   FunctionDecl foo
+       Return type: number
+           ParamList:
+               VariableDecl x(number)
+               no initialization.
+           ReturnStatement
+               Binary:Plus(number)
+                   Variable: x(number), resolved
+                   10(integer)
+   ExpressionStatement
+       FunctionCall (void)println, built-in
+           FunctionCall integer_to_string, built-in
+               FunctionCall (number)foo, resolved
+                   18(integer)
+
+运行当前的程序:
+28
+程序返回值: 0
+耗时：0.001秒
+
+编译成字节码
+println{Function, local var count:1}
+tick{Function, local var count:0}
+integer_to_string{Function, local var count:1}
+main{Function, local var count:0}
+foo{Function, local var count:1}
+
+使用栈机运行程序:
+28
